@@ -15,12 +15,10 @@ def get_department_namelists(schID, depID):
         return None
     r.encoding = 'utf-8'
     soup = BeautifulSoup(r.text, 'html.parser')
-    tags = []
-    tags += soup.find_all('span')
-    tags += soup.find_all('span')
+    tags = soup.find_all('span')
     li = []
     for tag in tags:
-        if len(tag.text) == 8:
+        if re.fullmatch(r'\d{8}', tag.text):
             li.append(int(tag.text))
         if tag.text.startswith('通過第一階段篩選人數'):
             count = int(re.findall(r'\d+', tag.text)[0])
@@ -53,7 +51,7 @@ def get_department(schID):
 
 if __name__ == '__main__':
     schID = int(input('學校代碼: '))
-    # depID = int(input('科系代碼: '))
-    # li = get_department_namelists(schID, depID)
-    li = get_department(schID)
+    depID = int(input('科系代碼: '))
+    li = get_department_namelists(schID, depID)
+    # li = get_department(schID)
     print(li)
