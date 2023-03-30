@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import numpy as np
 import re
+import sqlite3
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'}
 
@@ -18,13 +19,18 @@ def get_department_namelists(schID, depID):
     tags = soup.find_all('span')
     li = []
     for tag in tags:
-        if re.fullmatch(r'\d{8}', tag.text):
-            li.append(int(tag.text))
+        if re.fullmatch(r'[A\d]\d{7}', tag.text):
+            if tag.text.startswith('A'):
+                # 青年儲蓄帳戶組開頭為 A 先做移除處理
+                li.append(int(tag.text[1:]))
+            else:
+                li.append(int(tag.text))
         if tag.text.startswith('通過第一階段篩選人數'):
             count = int(re.findall(r'\d+', tag.text)[0])
         if tag.text.startswith(f'({camCode})'):
             name = tag.text.replace(f'({camCode})', '')
     li = np.unique(li)
+    print(li)
     if len(li) != count:
         print('Error: ', len(li), count, 'length not equal')
         return None
@@ -58,10 +64,11 @@ def get_sch():
     r.encoding = 'utf-8'
     soup = BeautifulSoup(r.text, 'html.parser')
     tags = soup.find_all('span')
-    li = []
+    li = {}
     for tag in tags:
         if re.fullmatch(r'\(\d{3}\).*', tag.text):
-            li.append(tag.text[5:])
+            li.update({int(tag.text[1:4]): tag.text[5:]})
+            print(tag.text[1:4], tag.text[5:])
     li = np.unique(li)
     return li
 
@@ -72,3 +79,4 @@ if __name__ == '__main__':
     # li = get_department(schID)
     li = get_sch()
     print(li)
+    # get_data()
