@@ -36,8 +36,7 @@ def get_department_namelists(schID, depID):
     return li
 
 if __name__ == '__main__':
-    input('Press Enter to start')
-    schID = int(input('School ID: '))
-    depID = int(input('Department ID: '))
+    schID = int(input('學校名稱: '))
+    depID = int(input('科系代碼: '))
     li = get_department_namelists(schID, depID)
     print(li, '\n通過第一階段篩選人數: ', len(li))
