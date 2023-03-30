@@ -27,16 +27,14 @@ def get_department_namelists(schID, depID):
         if tag.text.startswith(f'({camCode})'):
             name = tag.text.replace(f'({camCode})', '')
     li = np.unique(li)
-    # print('get count: ', count)
-    # print('get length: ', len(li))
-    print('校系名稱: ', name)
     if len(li) != count:
         print('Error: ', len(li), count, 'length not equal')
         return None
+    print(li, '\n通過第一階段篩選人數: ', len(li))
+    print('校系名稱: ', name)
     return li
 
 if __name__ == '__main__':
     schID = int(input('學校名稱: '))
     depID = int(input('科系代碼: '))
     li = get_department_namelists(schID, depID)
-    print(li, '\n通過第一階段篩選人數: ', len(li))
