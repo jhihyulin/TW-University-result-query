@@ -7,7 +7,7 @@ headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 
 def get_department_namelists(schID, depID):
     camCode = str(schID).zfill(3) + str(depID).zfill(3)
-    print(camCode)
+    print('校系代碼: ', camCode)
     url = f'https://www.cac.edu.tw/CacLink/apply112/112Apply_SieveW8n_H86sTvu/html_sieve_112_P5gW9x/ColPost/common/apply/{camCode}.htm'
     r = requests.get(url, headers = headers)
     if r.status_code != 200:
@@ -24,14 +24,17 @@ def get_department_namelists(schID, depID):
             li.append(int(tag.text))
         if tag.text.startswith('通過第一階段篩選人數'):
             count = int(re.findall(r'\d+', tag.text)[0])
-    print('get count: ', count)
     li = np.unique(li)
-    print('get length: ', len(li))
+    # print('get count: ', count)
+    # print('get length: ', len(li))
     if len(li) != count:
         print('Error: ', len(li), count, 'length not equal')
         return None
     return li
 
 if __name__ == '__main__':
-    li = get_department_namelists(1, 602)
-    print(li)
+    input('Press Enter to start')
+    schID = int(input('School ID: '))
+    depID = int(input('Department ID: '))
+    li = get_department_namelists(schID, depID)
+    print(li, '\n通過第一階段篩選人數: ', len(li))
