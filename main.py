@@ -110,13 +110,14 @@ def deal_data():
             print(i, end=' ')
             if al_data is None:
                 pass_li = []
-                pass_li.append(int(str(row[0]).zfill(3) + str(row[3]).zfill(3)))
+                # TODO here is the problem
+                pass_li.append(int(str(row[1]).zfill(3) + str(row[3]).zfill(3)))
                 for j in range(len(pass_li)):
                     pass_li[j] = str(pass_li[j]).zfill(6)
                 print(pass_li)
             else:
                 pass_li = al_data[0].replace('[', '').replace(']', '').split(', ')
-                pass_li.append(int(str(row[0]).zfill(3) + str(row[3]).zfill(3)))
+                pass_li.append(int(str(row[1]).zfill(3) + str(row[3]).zfill(3)))
                 for j in range(len(pass_li)):
                     if type(pass_li[j]) == str:
                         pass_li[j] = pass_li[j].replace('\'', '')
@@ -147,4 +148,4 @@ if __name__ == '__main__':
     # print(li)
     # get_data()
     # deal_data()
-    print(search(11062826))
+    print(search(input('輸入應試號碼: ')))
