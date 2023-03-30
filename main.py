@@ -28,7 +28,7 @@ def get_department_namelists(schID, depID):
     if len(li) != count:
         print('Error: ', len(li), count, 'length not equal')
         return None
-    print(li, '\n通過第一階段篩選人數: ', len(li))
+    print('\n通過第一階段篩選人數: ', len(li))
     print('校系名稱: ', name)
     return li
 
