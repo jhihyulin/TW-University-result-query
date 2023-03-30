@@ -1,27 +1,37 @@
 import requests
 from bs4 import BeautifulSoup
+import numpy as np
+import re
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'}
 
-def get_department_namelists(depID):
-    url = 'https://www.cac.edu.tw/CacLink/apply112/112Apply_SieveW8n_H86sTvu/html_sieve_112_P5gW9x/ColPost/common/apply/' + str(depID) + '.htm'
+def get_department_namelists(schID, depID):
+    camCode = str(schID).zfill(3) + str(depID).zfill(3)
+    print(camCode)
+    url = f'https://www.cac.edu.tw/CacLink/apply112/112Apply_SieveW8n_H86sTvu/html_sieve_112_P5gW9x/ColPost/common/apply/{camCode}.htm'
     r = requests.get(url, headers = headers)
-    # print(r.text)
-    # return html file
-    # need to be catch class name htmldw43CC5 and htmldw43CC7
-    # then have int
+    if r.status_code != 200:
+        print('Error: ', r.status_code)
+        return None
     r.encoding = 'utf-8'
     soup = BeautifulSoup(r.text, 'html.parser')
     tags = []
-    tags += soup.find_all('span', class_ = 'htmldw70412')
-    tags += soup.find_all('span', class_ = 'htmldw70414')
+    tags += soup.find_all('span')
+    tags += soup.find_all('span')
     li = []
     for tag in tags:
-        li.append(int(tag.text))
-    # print(li)
+        if len(tag.text) == 8:
+            li.append(int(tag.text))
+        if tag.text.startswith('通過第一階段篩選人數'):
+            count = int(re.findall(r'\d+', tag.text)[0])
+    print('get count: ', count)
+    li = np.unique(li)
+    print('get length: ', len(li))
+    if len(li) != count:
+        print('Error: ', len(li), count, 'length not equal')
+        return None
     return li
 
 if __name__ == '__main__':
-    li = get_department_namelists(153082)
+    li = get_department_namelists(1, 602)
     print(li)
-    print('數量: ', len(li))
