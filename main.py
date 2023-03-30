@@ -24,9 +24,12 @@ def get_department_namelists(schID, depID):
             li.append(int(tag.text))
         if tag.text.startswith('通過第一階段篩選人數'):
             count = int(re.findall(r'\d+', tag.text)[0])
+        if tag.text.startswith(f'({camCode})'):
+            name = tag.text.replace(f'({camCode})', '')
     li = np.unique(li)
     # print('get count: ', count)
     # print('get length: ', len(li))
+    print('校系名稱: ', name)
     if len(li) != count:
         print('Error: ', len(li), count, 'length not equal')
         return None
