@@ -92,6 +92,42 @@ def get_data():
                 conn.commit()
     conn.close()
 
+def deal_data():
+    conn = sqlite3.connect('data.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM data')
+    wc = conn.cursor()
+    wc.execute('CREATE TABLE IF NOT EXISTS pdata (id INTEGER PRIMARY KEY, schdepID STRING)')
+    for row in c:
+        # print(row[0], row[1], row[2], row[3], row[4], row[5], row[6])
+        passList = row[5].replace('[', '').replace(']', '').split(', ')
+        if passList[0] == '':
+            passList = []
+        else:
+            passList = [int(i) for i in passList]
+        for i in passList:
+            al_data = wc.execute('SELECT schdepID FROM pdata WHERE id = ?', (int(i),)).fetchone()
+            print(i, end=' ')
+            if al_data is None:
+                pass_li = []
+                pass_li.append(int(str(row[0]).zfill(3) + str(row[3]).zfill(3)))
+                for j in range(len(pass_li)):
+                    pass_li[j] = str(pass_li[j]).zfill(6)
+                print(pass_li)
+            else:
+                pass_li = al_data[0].replace('[', '').replace(']', '').split(', ')
+                pass_li.append(int(str(row[0]).zfill(3) + str(row[3]).zfill(3)))
+                for j in range(len(pass_li)):
+                    if type(pass_li[j]) == str:
+                        pass_li[j] = pass_li[j].replace('\'', '')
+                    else:
+                        pass_li[j] = str(pass_li[j]).zfill(6)
+                print(pass_li)
+            wc.execute('DELETE FROM pdata WHERE id = ?', (int(i),))
+            wc.execute('INSERT INTO pdata (id, schdepID) VALUES (?, ?)', (int(i), str(pass_li)))
+            conn.commit()
+    conn.close()
+
 if __name__ == '__main__':
     # schID = int(input('學校代碼: '))
     # depID = int(input('科系代碼: '))
@@ -99,4 +135,5 @@ if __name__ == '__main__':
     # li = get_department(schID)
     # li = get_sch()
     # print(li)
-    get_data()
+    # get_data()
+    deal_data()
