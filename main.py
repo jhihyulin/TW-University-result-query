@@ -128,6 +128,16 @@ def deal_data():
             conn.commit()
     conn.close()
 
+def search(id):
+    conn = sqlite3.connect('data.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM pdata WHERE id = ?', (id,))
+    data = c.fetchone()
+    if data is None:
+        return None
+    else:
+        return data
+
 if __name__ == '__main__':
     # schID = int(input('學校代碼: '))
     # depID = int(input('科系代碼: '))
@@ -136,4 +146,5 @@ if __name__ == '__main__':
     # li = get_sch()
     # print(li)
     # get_data()
-    deal_data()
+    # deal_data()
+    print(search(11062826))
