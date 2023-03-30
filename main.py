@@ -34,7 +34,26 @@ def get_department_namelists(schID, depID):
     print('校系名稱: ', name)
     return li
 
+def get_department(schID):
+    schID = str(schID).zfill(3)
+    url = f'https://www.cac.edu.tw/CacLink/apply112/112Apply_SieveW8n_H86sTvu/html_sieve_112_P5gW9x/ColPost/common/{schID}.htm'
+    r = requests.get(url, headers = headers)
+    if r.status_code != 200:
+        print('Error: ', r.status_code)
+        return None
+    r.encoding = 'utf-8'
+    soup = BeautifulSoup(r.text, 'html.parser')
+    tags = soup.find_all('a')
+    li = []
+    for tag in tags:
+        if re.fullmatch(r'\d{6}', tag.text):
+            li.append(int(tag.text[3:6]))
+    li = np.unique(li)
+    return li
+
 if __name__ == '__main__':
-    schID = int(input('學校名稱: '))
-    depID = int(input('科系代碼: '))
-    li = get_department_namelists(schID, depID)
+    schID = int(input('學校代碼: '))
+    # depID = int(input('科系代碼: '))
+    # li = get_department_namelists(schID, depID)
+    li = get_department(schID)
+    print(li)
