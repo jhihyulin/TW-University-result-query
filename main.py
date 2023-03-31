@@ -92,6 +92,7 @@ def get_data():
                 c.execute('INSERT INTO data (id, schName, depName, passList, passCount) VALUES (?, ?, ?, ?, ?)', (id, sch_li[i], name, str(dep_li.tolist()), len(dep_li)))
                 conn.commit()
     conn.close()
+    print('取得資料完成')
 
 def deal_data():
     conn = sqlite3.connect('data.db')
@@ -99,6 +100,7 @@ def deal_data():
     c.execute('SELECT * FROM data')
     wc = conn.cursor()
     wc.execute('CREATE TABLE IF NOT EXISTS pdata (id INTEGER PRIMARY KEY, schdepID STRING)')
+    count = 0
     for row in c:
         # print(row[0], row[1], row[2], row[3], row[4], row[5], row[6])
         passList = row[3].replace('[', '').replace(']', '').split(', ')
@@ -125,9 +127,11 @@ def deal_data():
                     else:
                         pass_li[j] = str(pass_li[j]).zfill(6)
                 print(pass_li)
+            count += 1
             wc.execute('DELETE FROM pdata WHERE id = ?', (int(i),))
             wc.execute('INSERT INTO pdata (id, schdepID) VALUES (?, ?)', (int(i), str(pass_li)))
             conn.commit()
+    print(f'處理資料完成, 總共處理了{count}筆資料, 有{wc.execute("SELECT COUNT(*) FROM pdata").fetchone()[0]}筆應試號碼')
     conn.close()
 
 def search(id):
@@ -147,7 +151,7 @@ if __name__ == '__main__':
     # li = get_department(schID)
     # li = get_sch()
     # print(li)
-    # get_data()
+    get_data()
     deal_data()
     # print(search(input('輸入應試號碼: ')))
     # conn = sqlite3.connect('data.db')
