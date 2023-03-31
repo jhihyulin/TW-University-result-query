@@ -161,7 +161,7 @@ def get_tu_sch():
 
 def get_tu_dep():
     sch_li = get_tu_sch()
-    conn = sqlite3.connect('data.db')
+    conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     wc = conn.cursor()
     c.execute('CREATE TABLE IF NOT EXISTS tudata (id INTEGER PRIMARY KEY, schName TEXT, depName TEXT, passList TEXT)')
@@ -200,7 +200,7 @@ def get_tu_dep():
     print('科技大學資料取得完成')
 
 def deal_tudata():
-    conn = sqlite3.connect('data.db')
+    conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     c.execute('SELECT * FROM tudata')
     wc = conn.cursor()
@@ -239,7 +239,7 @@ def deal_tudata():
     conn.close()
 
 def get_data():
-    conn = sqlite3.connect('data.db')
+    conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     c.execute('CREATE TABLE IF NOT EXISTS data (id INTEGER PRIMARY KEY, schName TEXT, depName TEXT, passList TEXT, passCount INTEGER)')
     conn.commit()
@@ -259,7 +259,7 @@ def get_data():
     print('普通大學資料取得完成')
 
 def deal_data():
-    conn = sqlite3.connect('data.db')
+    conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     c.execute('SELECT * FROM data')
     wc = conn.cursor()
@@ -299,7 +299,7 @@ def deal_data():
     conn.close()
 
 def get_star_data():
-    conn = sqlite3.connect('data.db')
+    conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     c.execute('CREATE TABLE IF NOT EXISTS stardata (id INTEGER PRIMARY KEY, schName TEXT, depName TEXT, passList TEXT, passCount INTEGER)')
     conn.commit()
@@ -319,7 +319,7 @@ def get_star_data():
     print('繁星推薦資料取得完成')
 
 def deal_star_data():
-    conn = sqlite3.connect('data.db')
+    conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     c.execute('SELECT * FROM stardata')
     wc = conn.cursor()
@@ -359,7 +359,7 @@ def deal_star_data():
     conn.close()
 
 def search(id):
-    conn = sqlite3.connect('data.db')
+    conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     data = c.execute('SELECT * FROM pdata WHERE id = ?', (id,)).fetchone()
     conn.close()
@@ -372,7 +372,7 @@ def search(id):
                 pass_li[i] = int(pass_li[i].replace('\'', ''))
             else:
                 pass_li[i] = int(pass_li[i])
-        conn = sqlite3.connect('data.db')
+        conn = sqlite3.connect('data.sqlite')
         cw = conn.cursor()
         pass_li_sch_dep = {}
         for i in range(len(pass_li)):
@@ -382,7 +382,7 @@ def search(id):
         return pass_li_sch_dep
 
 def tusearch(id):
-    conn = sqlite3.connect('data.db')
+    conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     data = c.execute('SELECT * FROM tupdata WHERE id = ?', (id,)).fetchone()
     conn.close()
@@ -395,7 +395,7 @@ def tusearch(id):
                 pass_li[i] = int(pass_li[i].replace('\'', ''))
             else:
                 pass_li[i] = int(pass_li[i])
-        conn = sqlite3.connect('data.db')
+        conn = sqlite3.connect('data.sqlite')
         cw = conn.cursor()
         pass_li_sch_dep = {}
         for i in range(len(pass_li)):
@@ -405,7 +405,7 @@ def tusearch(id):
         return pass_li_sch_dep
 
 def starsearch(id):
-    conn = sqlite3.connect('data.db')
+    conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     data = c.execute('SELECT * FROM starpdata WHERE id = ?', (id,)).fetchone()
     conn.close()
@@ -418,7 +418,7 @@ def starsearch(id):
                 pass_li[i] = int(pass_li[i].replace('\'', ''))
             else:
                 pass_li[i] = int(pass_li[i])
-        conn = sqlite3.connect('data.db')
+        conn = sqlite3.connect('data.sqlite')
         cw = conn.cursor()
         pass_li_sch_dep = {}
         for i in range(len(pass_li)):
@@ -428,7 +428,7 @@ def starsearch(id):
         return pass_li_sch_dep
 
 def searchname(id):
-    conn = sqlite3.connect('data.db')
+    conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     data = c.execute('SELECT * FROM pnamedata WHERE id = ?', (id,)).fetchone()
     conn.close()
@@ -451,7 +451,7 @@ if __name__ == '__main__':
         act = int(input('[1]取得並處理資料 [2]查詢應試號碼: '))
         if act == 1:
             print('----------------------------------------')
-            os.remove('data.db')
+            os.remove('data.sqlite')
             print('----------------------------------------')
             get_star_data()
             print('----------------------------------------')
@@ -503,7 +503,7 @@ if __name__ == '__main__':
     # get_star_data()
     # deal_star_data()
 
-    # conn = sqlite3.connect('data.db')
+    # conn = sqlite3.connect('data.sqlite')
     # c = conn.cursor()
     # c.execute('DROP TABLE IF EXISTS data')
     # conn.commit()
