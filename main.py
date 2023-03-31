@@ -476,10 +476,10 @@ if __name__ == '__main__':
                     print('----------------------------------------')
                     print('查無此號碼')
                 else:
-                    print('校系代碼 學校名稱 + 學系名稱 (按校系代碼排序)')
+                    print('校系代碼 學校名稱 + 校系名稱 (按校系代碼排序)')
                     if stardata is not None:
                         print('----------------------------------------')
-                        print(f'繁星推薦通過{len(stardata)}個校系')
+                        print(f'繁星推薦通過')# 繁星只有一個校系
                         print('----------------------------------------')
                         for i in stardata.keys():
                             print(str(i).zfill(6), stardata[i])
