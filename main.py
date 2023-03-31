@@ -75,6 +75,101 @@ def get_sch():
             # print(tag.text[1:4], tag.text[5:])
     return li
 
+def get_tu_sch():
+    url = 'https://ent01.jctv.ntut.edu.tw/applys1result/college.html'
+    r = requests.get(url, headers = headers)
+    if r.status_code != 200:
+        print('Error: ', r.status_code)
+        return None
+    r.encoding = 'utf-8'
+    soup = BeautifulSoup(r.text, 'html.parser')
+    tags = soup.find_all('option')
+    li = {}
+    for tag in tags:
+        if len(tag.text) > 1:
+            data = str(tag.text).replace(' ', '').replace('\r', '').replace('\n', '').replace('\t', '').split('-')
+            li.update({int(data[0]): data[1]})
+    return li
+
+def get_tu_dep():
+    sch_li = get_tu_sch()
+    conn = sqlite3.connect('data.db')
+    c = conn.cursor()
+    wc = conn.cursor()
+    c.execute('CREATE TABLE IF NOT EXISTS tudata (id INTEGER PRIMARY KEY, schName TEXT, depName TEXT, passList TEXT)')
+    c.execute('CREATE TABLE IF NOT EXISTS pnamedata (id INTEGER PRIMARY KEY, name TEXT)')
+    for i in sorted(sch_li.keys()):
+        url = f'https://ent01.jctv.ntut.edu.tw/applys1result/college.html?doit=view&code={i}'
+        r = requests.post(url, headers = headers)
+        if r.status_code != 200:
+            print('Error: ', r.status_code)
+        else:
+            r.encoding = 'utf-8'
+            soup = BeautifulSoup(r.text, 'html.parser')
+            tags = soup.find_all('tr', {'align': 'center', 'class': 'even'})
+            tags = tags + soup.find_all('tr', {'align': 'center', 'class': 'odd'})
+            for tag in tags:
+                num = tag.findAll('td')[0].text
+                name = tag.findAll('td')[1].text
+                pname, id = tag.findAll('td')[2].text.replace(
+                    '	', '').replace(')', '').replace('\r', '').replace('\n', '').split('(')
+                print(num, sch_li[i], name, pname, id)
+                if c.execute('SELECT * FROM pnamedata WHERE id = ?', (int(id),)).fetchone() is None:
+                    c.execute('INSERT INTO pnamedata (id, name) VALUES (?, ?)', (int(id), pname))
+                if wc.execute('SELECT * FROM tudata WHERE id = ?', (num,)).fetchone() is None:
+                    passList = []
+                    passList.append(int(id))
+                    c.execute('INSERT INTO tudata (id, schName, depName, passList) VALUES (?, ?, ?, ?)', (num, sch_li[i], name, str(passList)))
+                else:
+                    passList = []
+                    passList = wc.execute('SELECT passList FROM tudata WHERE id = ?', (num,)).fetchone()[0]
+                    passList = passList.replace('[', '').replace(']', '').replace('\'', '').replace(' ', '').split(',')
+                    passList.append(int(id))
+                    passList = np.unique(passList)
+                    c.execute('DELETE FROM tudata WHERE id = ?', (num,))
+                    c.execute('INSERT INTO tudata (id, schName, depName, passList) VALUES (?, ?, ?, ?)', (num, sch_li[i], name, str(passList.tolist()).replace('\'', '')))
+                conn.commit()
+    print('科技大學資料取得完成')
+
+def deal_tudata():
+    conn = sqlite3.connect('data.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM tudata')
+    wc = conn.cursor()
+    wc.execute('CREATE TABLE IF NOT EXISTS tupdata (id INTEGER PRIMARY KEY, schdepID TEXT)')
+    count = 0
+    for row in c:
+        passList = row[3].replace('[', '').replace(']', '').split(', ')
+        if passList[0] == '':
+            passList = []
+        else:
+            passList = [int(i) for i in passList]
+        for i in passList:
+            al_data = wc.execute('SELECT schdepID FROM tupdata WHERE id = ?', (i,)).fetchone()
+            print(i, end=' ')
+            if al_data is None:
+                pass_li = []
+                # TODO here is the problem
+                pass_li.append(int(str(row[0]).zfill(3)))
+                for j in range(len(pass_li)):
+                    pass_li[j] = str(pass_li[j]).zfill(6)
+                print(pass_li)
+            else:
+                pass_li = al_data[0].replace('[', '').replace(']', '').split(', ')
+                pass_li.append(int(str(row[0]).zfill(3)))
+                for j in range(len(pass_li)):
+                    if type(pass_li[j]) == str:
+                        pass_li[j] = pass_li[j].replace('\'', '')
+                    else:
+                        pass_li[j] = str(pass_li[j]).zfill(6)
+                print(pass_li)
+            count += 1
+            wc.execute('DELETE FROM tupdata WHERE id = ?', (int(i),))
+            wc.execute('INSERT INTO tupdata (id, schdepID) VALUES (?, ?)', (int(i), str(pass_li)))
+            conn.commit()
+    print(f'科技大學資料處理完成, 總共處理了{count}筆資料, 有{wc.execute("SELECT COUNT(*) FROM tupdata").fetchone()[0]}筆應試號碼')
+    conn.close()
+
 def get_data():
     conn = sqlite3.connect('data.db')
     c = conn.cursor()
@@ -93,7 +188,7 @@ def get_data():
                 c.execute('INSERT INTO data (id, schName, depName, passList, passCount) VALUES (?, ?, ?, ?, ?)', (id, sch_li[i], name, str(dep_li.tolist()), len(dep_li)))
                 conn.commit()
     conn.close()
-    print('取得資料完成')
+    print('普通大學資料取得完成')
 
 def deal_data():
     conn = sqlite3.connect('data.db')
@@ -132,7 +227,7 @@ def deal_data():
             wc.execute('DELETE FROM pdata WHERE id = ?', (int(i),))
             wc.execute('INSERT INTO pdata (id, schdepID) VALUES (?, ?)', (int(i), str(pass_li)))
             conn.commit()
-    print(f'處理資料完成, 總共處理了{count}筆資料, 有{wc.execute("SELECT COUNT(*) FROM pdata").fetchone()[0]}筆應試號碼')
+    print(f'普通大學資料處理完成, 總共處理了{count}筆資料, 有{wc.execute("SELECT COUNT(*) FROM pdata").fetchone()[0]}筆應試號碼')
     conn.close()
 
 def search(id):
@@ -158,6 +253,39 @@ def search(id):
         conn.close()
         return pass_li_sch_dep
 
+def tusearch(id):
+    conn = sqlite3.connect('data.db')
+    c = conn.cursor()
+    data = c.execute('SELECT * FROM tupdata WHERE id = ?', (id,)).fetchone()
+    conn.close()
+    if data is None:
+        return None
+    else:
+        pass_li = data[1].replace('[', '').replace(']', '').split(', ')
+        for i in range(len(pass_li)):
+            if type(pass_li[i]) == str:
+                pass_li[i] = int(pass_li[i].replace('\'', ''))
+            else:
+                pass_li[i] = int(pass_li[i])
+        conn = sqlite3.connect('data.db')
+        cw = conn.cursor()
+        pass_li_sch_dep = {}
+        for i in range(len(pass_li)):
+            data = cw.execute('SELECT * FROM tudata WHERE id = ?', (pass_li[i],)).fetchone()
+            pass_li_sch_dep.update({pass_li[i]: data[1] + data[2]})
+        conn.close()
+        return pass_li_sch_dep
+
+def searchname(id):
+    conn = sqlite3.connect('data.db')
+    c = conn.cursor()
+    data = c.execute('SELECT * FROM pnamedata WHERE id = ?', (id,)).fetchone()
+    conn.close()
+    if data is None:
+        return None
+    else:
+        return data[1]
+
 if __name__ == '__main__':
     # schID = int(input('學校代碼: '))
     # depID = int(input('科系代碼: '))
@@ -167,6 +295,7 @@ if __name__ == '__main__':
     # print(li)
     # get_data()
     # deal_data()
+
     while True:
         act = int(input('[1]取得並處理資料 [2]查詢應試號碼: '))
         if act == 1:
@@ -179,22 +308,41 @@ if __name__ == '__main__':
         elif act == 2:
             while True:
                 print('----------------------------------------')
-                data = search(input('輸入應試號碼: '))
-                if data is None:
+                num = input('輸入應試號碼: ')
+                data = search(int(num))
+                tudata = tusearch(int(num))
+                name = searchname(int(num))
+                if name is not None:
+                    print('----------------------------------------')
+                    print(f'姓名: {name}')
+                if data is None and tudata is None:
                     print('----------------------------------------')
                     print('查無此號碼')
                 else:
-                    print('----------------------------------------')
-                    print(f'共有{len(data)}筆資料')
-                    print('校系代碼 學校名稱 + 學系名稱 (按校系代碼排序)')
-                    print('----------------------------------------')
-                    for i in data.keys():
-                        print(str(i).zfill(6), data[i])
+                    if data is not None:
+                        print('----------------------------------------')
+                        print('普通大學')
+                        print(f'共有{len(data)}筆資料')
+                        print('校系代碼 學校名稱 + 學系名稱 (按校系代碼排序)')
+                        print('----------------------------------------')
+                        for i in data.keys():
+                            print(str(i).zfill(6), data[i])
+                    if tudata is not None:
+                        print('----------------------------------------')
+                        print('科技大學')
+                        print(f'共有{len(tudata)}筆資料')
+                        print('校系代碼 學校名稱 + 學系名稱 (按校系代碼排序)')
+                        print('----------------------------------------')
+                        for i in tudata.keys():
+                            print(str(i).zfill(6), tudata[i])
         else:
             print('----------------------------------------')
             print('輸入錯誤')
+
     # conn = sqlite3.connect('data.db')
     # c = conn.cursor()
     # c.execute('DROP TABLE IF EXISTS data')
     # conn.commit()
     # conn.close()
+    # get_tu_dep()
+    # deal_tudata()
