@@ -77,7 +77,7 @@ def get_sch():
 def get_data():
     conn = sqlite3.connect('data.db')
     c = conn.cursor()
-    c.execute('CREATE TABLE IF NOT EXISTS data (id INTEGER PRIMARY KEY, schID INTEGER, schName TEXT, depID INTEGER, depName TEXT, passList TEXT, passCount INTEGER)')
+    c.execute('CREATE TABLE IF NOT EXISTS data (id INTEGER PRIMARY KEY, schName TEXT, depName TEXT, passList TEXT, passCount INTEGER)')
     conn.commit()
     sch_li = get_sch()
     for i in sorted(sch_li.keys()):
@@ -88,7 +88,8 @@ def get_data():
             dep_li, name = get_department_namelists(i, j)
             print(name, len(dep_li))
             if dep_li is not None:
-                c.execute('INSERT INTO data (schID, schName, depID, depName, passList, passCount) VALUES (?, ?, ?, ?, ?, ?)', (int(i), sch_li[i], int(j), name, str(dep_li.tolist()), len(dep_li)))
+                id = int(str(i).zfill(3) + str(j).zfill(3))
+                c.execute('INSERT INTO data (id, schName, depName, passList, passCount) VALUES (?, ?, ?, ?, ?)', (id, sch_li[i], name, str(dep_li.tolist()), len(dep_li)))
                 conn.commit()
     conn.close()
 
@@ -100,7 +101,7 @@ def deal_data():
     wc.execute('CREATE TABLE IF NOT EXISTS pdata (id INTEGER PRIMARY KEY, schdepID STRING)')
     for row in c:
         # print(row[0], row[1], row[2], row[3], row[4], row[5], row[6])
-        passList = row[5].replace('[', '').replace(']', '').split(', ')
+        passList = row[3].replace('[', '').replace(']', '').split(', ')
         if passList[0] == '':
             passList = []
         else:
@@ -111,13 +112,13 @@ def deal_data():
             if al_data is None:
                 pass_li = []
                 # TODO here is the problem
-                pass_li.append(int(str(row[1]).zfill(3) + str(row[3]).zfill(3)))
+                pass_li.append(int(str(row[0]).zfill(3)))
                 for j in range(len(pass_li)):
                     pass_li[j] = str(pass_li[j]).zfill(6)
                 print(pass_li)
             else:
                 pass_li = al_data[0].replace('[', '').replace(']', '').split(', ')
-                pass_li.append(int(str(row[1]).zfill(3) + str(row[3]).zfill(3)))
+                pass_li.append(int(str(row[0]).zfill(3)))
                 for j in range(len(pass_li)):
                     if type(pass_li[j]) == str:
                         pass_li[j] = pass_li[j].replace('\'', '')
@@ -147,5 +148,10 @@ if __name__ == '__main__':
     # li = get_sch()
     # print(li)
     # get_data()
-    # deal_data()
-    print(search(input('輸入應試號碼: ')))
+    deal_data()
+    # print(search(input('輸入應試號碼: ')))
+    # conn = sqlite3.connect('data.db')
+    # c = conn.cursor()
+    # c.execute('DROP TABLE IF EXISTS data')
+    # conn.commit()
+    # conn.close()
