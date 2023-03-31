@@ -307,8 +307,10 @@ if __name__ == '__main__':
             print('----------------------------------------')
         elif act == 2:
             while True:
-                print('----------------------------------------')
-                num = input('輸入應試號碼: ')
+                print('========================================')
+                num = input('輸入應試號碼(輸入q離開): ')
+                if num == 'q':
+                    break
                 data = search(int(num))
                 tudata = tusearch(int(num))
                 name = searchname(int(num))
@@ -319,22 +321,20 @@ if __name__ == '__main__':
                     print('----------------------------------------')
                     print('查無此號碼')
                 else:
+                    print('校系代碼 學校名稱 + 學系名稱 (按校系代碼排序)')
                     if data is not None:
                         print('----------------------------------------')
-                        print('普通大學')
-                        print(f'共有{len(data)}筆資料')
-                        print('校系代碼 學校名稱 + 學系名稱 (按校系代碼排序)')
+                        print(f'普通大學通過{len(data)}個校系')
                         print('----------------------------------------')
                         for i in data.keys():
                             print(str(i).zfill(6), data[i])
                     if tudata is not None:
                         print('----------------------------------------')
-                        print('科技大學')
-                        print(f'共有{len(tudata)}筆資料')
-                        print('校系代碼 學校名稱 + 科系名稱 (按校系代碼排序)')
+                        print(f'科技大學通過{len(tudata)}個校系')
                         print('----------------------------------------')
                         for i in tudata.keys():
                             print(str(i).zfill(6), tudata[i])
+                print('========================================')
         else:
             print('----------------------------------------')
             print('輸入錯誤')
