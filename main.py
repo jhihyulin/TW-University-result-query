@@ -75,6 +75,74 @@ def get_sch():
             # print(tag.text[1:4], tag.text[5:])
     return li
 
+def get_star_department_namelists(schID, depID):
+    camCode = str(schID).zfill(3) + str(depID).zfill(2)
+    # print('校系代碼: ', camCode)
+    url = f'https://www.cac.edu.tw/CacLink/star112/112pstar_W2_result_RW64tXZ3qa/html_112_K3tg/ColReport/one2seven/common/star/{camCode}.htm'
+    r = requests.get(url, headers = headers)
+    if r.status_code != 200:
+        print('Error: ', r.status_code)
+        return None
+    r.encoding = 'utf-8'
+    soup = BeautifulSoup(r.text, 'html.parser')
+    tags = soup.find_all('span')
+    li = []
+    for tag in tags:
+        if re.fullmatch(r'[A\d]\d{7}', tag.text):
+            if tag.text.startswith('A'):
+                # 青年儲蓄帳戶組開頭為 A 先做移除處理
+                li.append(int(tag.text[1:]))
+            else:
+                li.append(int(tag.text))
+        if tag.text.startswith('錄取人數'):
+            count = int(re.findall(r'\d+', tag.text)[0])
+        if tag.text.startswith(f'({camCode})'):
+            name = tag.text.replace(f'({camCode})', '')
+    if len(li) == 0:
+        # print('Error: ', 'length is 0')
+        return np.unique([]), name
+    li = np.unique(li)
+    # print(li)
+    if len(li) != count:
+        print('Error: ', len(li), count, 'length not equal')
+        return None
+    # print('\n通過第一階段篩選人數: ', len(li))
+    # print('校系名稱: ', name)
+    return li, name
+
+def get_star_department(schID):
+    schID = str(schID).zfill(3)
+    url = f'https://www.cac.edu.tw/CacLink/star112/112pstar_W2_result_RW64tXZ3qa/html_112_K3tg/ColReport/one2seven/common/{schID}.htm'
+    r = requests.get(url, headers = headers)
+    if r.status_code != 200:
+        print('Error: ', r.status_code)
+        return None
+    r.encoding = 'utf-8'
+    soup = BeautifulSoup(r.text, 'html.parser')
+    tags = soup.find_all('a')
+    li = []
+    for tag in tags:
+        if re.fullmatch(r'\d{5}', tag.text):
+            li.append(int(tag.text[3:5]))
+    li = np.unique(li)
+    return li
+
+def get_star_sch():
+    url = 'https://www.cac.edu.tw/CacLink/star112/112pstar_W2_result_RW64tXZ3qa/html_112_K3tg/ColReport/one2seven/collegeList.htm'
+    r = requests.get(url, headers = headers)
+    if r.status_code != 200:
+        print('Error: ', r.status_code)
+        return None
+    r.encoding = 'utf-8'
+    soup = BeautifulSoup(r.text, 'html.parser')
+    tags = soup.find_all('span')
+    li = {}
+    for tag in tags:
+        if re.fullmatch(r'\(\d{3}\).*', tag.text):
+            li.update({int(tag.text[1:4]): tag.text[5:]})
+            # print(tag.text[1:4], tag.text[5:])
+    return li
+
 def get_tu_sch():
     url = 'https://ent01.jctv.ntut.edu.tw/applys1result/college.html'
     r = requests.get(url, headers = headers)
@@ -230,6 +298,66 @@ def deal_data():
     print(f'普通大學資料處理完成, 總共處理了{count}筆資料, 有{wc.execute("SELECT COUNT(*) FROM pdata").fetchone()[0]}筆應試號碼')
     conn.close()
 
+def get_star_data():
+    conn = sqlite3.connect('data.db')
+    c = conn.cursor()
+    c.execute('CREATE TABLE IF NOT EXISTS stardata (id INTEGER PRIMARY KEY, schName TEXT, depName TEXT, passList TEXT, passCount INTEGER)')
+    conn.commit()
+    sch_li = get_star_sch()
+    for i in sorted(sch_li.keys()):
+        # print('學校代碼: ', i)
+        depID = get_star_department(i)
+        for j in depID:
+            print(str(i).zfill(3), str(j).zfill(2), sch_li[i], end = ' ')
+            dep_li, name = get_star_department_namelists(i, j)
+            print(name, len(dep_li))
+            if dep_li is not None:
+                id = int(str(i).zfill(3) + str(j).zfill(2))
+                c.execute('INSERT INTO stardata (id, schName, depName, passList, passCount) VALUES (?, ?, ?, ?, ?)', (id, sch_li[i], name, str(dep_li.tolist()), len(dep_li)))
+                conn.commit()
+    conn.close()
+    print('繁星推薦資料取得完成')
+
+def deal_star_data():
+    conn = sqlite3.connect('data.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM stardata')
+    wc = conn.cursor()
+    wc.execute('CREATE TABLE IF NOT EXISTS starpdata (id INTEGER PRIMARY KEY, schdepID STRING)')
+    count = 0
+    for row in c:
+        # print(row[0], row[1], row[2], row[3], row[4], row[5], row[6])
+        passList = row[3].replace('[', '').replace(']', '').split(', ')
+        if passList[0] == '':
+            passList = []
+        else:
+            passList = [int(i) for i in passList]
+        for i in passList:
+            al_data = wc.execute('SELECT schdepID FROM starpdata WHERE id = ?', (int(i),)).fetchone()
+            print(i, end=' ')
+            if al_data is None:
+                pass_li = []
+                # TODO here is the problem
+                pass_li.append(int(str(row[0]).zfill(3)))
+                for j in range(len(pass_li)):
+                    pass_li[j] = str(pass_li[j]).zfill(6)
+                print(pass_li)
+            else:
+                pass_li = al_data[0].replace('[', '').replace(']', '').split(', ')
+                pass_li.append(int(str(row[0]).zfill(3)))
+                for j in range(len(pass_li)):
+                    if type(pass_li[j]) == str:
+                        pass_li[j] = pass_li[j].replace('\'', '')
+                    else:
+                        pass_li[j] = str(pass_li[j]).zfill(6)
+                print(pass_li)
+            count += 1
+            wc.execute('DELETE FROM starpdata WHERE id = ?', (int(i),))
+            wc.execute('INSERT INTO starpdata (id, schdepID) VALUES (?, ?)', (int(i), str(pass_li)))
+            conn.commit()
+    print(f'繁星推薦資料處理完成, 總共處理了{count}筆資料, 有{wc.execute("SELECT COUNT(*) FROM pdata").fetchone()[0]}筆應試號碼')
+    conn.close()
+
 def search(id):
     conn = sqlite3.connect('data.db')
     c = conn.cursor()
@@ -249,7 +377,7 @@ def search(id):
         pass_li_sch_dep = {}
         for i in range(len(pass_li)):
             data = cw.execute('SELECT * FROM data WHERE id = ?', (pass_li[i],)).fetchone()
-            pass_li_sch_dep.update({pass_li[i]: data[1] + data[2]})
+            pass_li_sch_dep.update({pass_li[i]: data[1].replace(' ', '') + ' ' + data[2].replace(' ', '')})
         conn.close()
         return pass_li_sch_dep
 
@@ -272,7 +400,30 @@ def tusearch(id):
         pass_li_sch_dep = {}
         for i in range(len(pass_li)):
             data = cw.execute('SELECT * FROM tudata WHERE id = ?', (pass_li[i],)).fetchone()
-            pass_li_sch_dep.update({pass_li[i]: data[1] + data[2]})
+            pass_li_sch_dep.update({pass_li[i]: data[1].replace(' ', '') + ' ' + data[2].replace(' ', '')})
+        conn.close()
+        return pass_li_sch_dep
+
+def starsearch(id):
+    conn = sqlite3.connect('data.db')
+    c = conn.cursor()
+    data = c.execute('SELECT * FROM starpdata WHERE id = ?', (id,)).fetchone()
+    conn.close()
+    if data is None:
+        return None
+    else:
+        pass_li = data[1].replace('[', '').replace(']', '').split(', ')
+        for i in range(len(pass_li)):
+            if type(pass_li[i]) == str:
+                pass_li[i] = int(pass_li[i].replace('\'', ''))
+            else:
+                pass_li[i] = int(pass_li[i])
+        conn = sqlite3.connect('data.db')
+        cw = conn.cursor()
+        pass_li_sch_dep = {}
+        for i in range(len(pass_li)):
+            data = cw.execute('SELECT * FROM stardata WHERE id = ?', (pass_li[i],)).fetchone()
+            pass_li_sch_dep.update({pass_li[i]: data[1].replace(' ', '') + ' ' + data[2].replace(' ', '')})
         conn.close()
         return pass_li_sch_dep
 
@@ -301,6 +452,9 @@ if __name__ == '__main__':
         if act == 1:
             print('----------------------------------------')
             os.remove('data.db')
+            print('----------------------------------------')
+            get_star_data()
+            print('----------------------------------------')
             get_data()
             print('----------------------------------------')
             deal_data()
@@ -313,15 +467,22 @@ if __name__ == '__main__':
                     break
                 data = search(int(num))
                 tudata = tusearch(int(num))
+                stardata = starsearch(int(num)) 
                 name = searchname(int(num))
                 if name is not None:
                     print('----------------------------------------')
                     print(f'姓名: {name}')
-                if data is None and tudata is None:
+                if data is None and tudata is None and stardata is None:
                     print('----------------------------------------')
                     print('查無此號碼')
                 else:
                     print('校系代碼 學校名稱 + 學系名稱 (按校系代碼排序)')
+                    if stardata is not None:
+                        print('----------------------------------------')
+                        print(f'繁星推薦通過{len(stardata)}個校系')
+                        print('----------------------------------------')
+                        for i in stardata.keys():
+                            print(str(i).zfill(6), stardata[i])
                     if data is not None:
                         print('----------------------------------------')
                         print(f'普通大學通過{len(data)}個校系')
@@ -338,6 +499,9 @@ if __name__ == '__main__':
         else:
             print('----------------------------------------')
             print('輸入錯誤')
+
+    # get_star_data()
+    # deal_star_data()
 
     # conn = sqlite3.connect('data.db')
     # c = conn.cursor()
