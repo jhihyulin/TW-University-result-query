@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import numpy as np
 import re
 import sqlite3
+import os
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'}
 
@@ -137,12 +138,25 @@ def deal_data():
 def search(id):
     conn = sqlite3.connect('data.db')
     c = conn.cursor()
-    c.execute('SELECT * FROM pdata WHERE id = ?', (id,))
-    data = c.fetchone()
+    data = c.execute('SELECT * FROM pdata WHERE id = ?', (id,)).fetchone()
+    conn.close()
     if data is None:
         return None
     else:
-        return data
+        pass_li = data[1].replace('[', '').replace(']', '').split(', ')
+        for i in range(len(pass_li)):
+            if type(pass_li[i]) == str:
+                pass_li[i] = int(pass_li[i].replace('\'', ''))
+            else:
+                pass_li[i] = int(pass_li[i])
+        conn = sqlite3.connect('data.db')
+        cw = conn.cursor()
+        pass_li_sch_dep = {}
+        for i in range(len(pass_li)):
+            data = cw.execute('SELECT * FROM data WHERE id = ?', (pass_li[i],)).fetchone()
+            pass_li_sch_dep.update({pass_li[i]: data[1] + data[2]})
+        conn.close()
+        return pass_li_sch_dep
 
 if __name__ == '__main__':
     # schID = int(input('學校代碼: '))
@@ -151,9 +165,35 @@ if __name__ == '__main__':
     # li = get_department(schID)
     # li = get_sch()
     # print(li)
-    get_data()
-    deal_data()
-    # print(search(input('輸入應試號碼: ')))
+    # get_data()
+    # deal_data()
+    while True:
+        act = int(input('[1]取得並處理資料 [2]查詢應試號碼: '))
+        if act == 1:
+            print('----------------------------------------')
+            os.remove('data.db')
+            get_data()
+            print('----------------------------------------')
+            deal_data()
+            print('----------------------------------------')
+        elif act == 2:
+            print('----------------------------------------')
+            data = search(input('輸入應試號碼: '))
+            if data is None:
+                print('----------------------------------------')
+                print('查無此號碼')
+                print('----------------------------------------')
+            else:
+                print('----------------------------------------')
+                print(f'共有{len(data)}筆資料')
+                print('校系代碼 學校名稱 + 學系名稱 (按校系代碼排序)')
+                print('----------------------------------------')
+                for i in data.keys():
+                    print(str(i).zfill(6), data[i])
+                print('----------------------------------------')
+        else:
+            print('----------------------------------------')
+            print('輸入錯誤')
     # conn = sqlite3.connect('data.db')
     # c = conn.cursor()
     # c.execute('DROP TABLE IF EXISTS data')
