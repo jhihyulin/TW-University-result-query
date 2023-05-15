@@ -437,6 +437,13 @@ def searchname(id):
     else:
         return data[1]
 
+def searchAll(id):
+    data = search(int(id))
+    tudata = tusearch(int(id))
+    stardata = starsearch(int(id))
+    name = searchname(int(id))
+    return data, tudata, stardata, name
+
 def main():
     while True:
         act = int(input('[1]取得並處理資料 [2]查詢應試號碼: '))
@@ -456,10 +463,7 @@ def main():
                 num = input('輸入應試號碼(輸入q離開): ')
                 if num == 'q':
                     break
-                data = search(int(num))
-                tudata = tusearch(int(num))
-                stardata = starsearch(int(num)) 
-                name = searchname(int(num))
+                data, tudata, stardata, name = searchAll(num)
                 if name is not None:
                     print('----------------------------------------')
                     print(f'姓名: {name}')
