@@ -7,7 +7,7 @@ import os
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'}
 
-def get_department_namelists(schID, depID):
+def get_university_apply_department_namelists(schID, depID):
     camCode = str(schID).zfill(3) + str(depID).zfill(3)
     # print('校系代碼: ', camCode)
     url = f'https://www.cac.edu.tw/CacLink/apply112/112Apply_SieveW8n_H86sTvu/html_sieve_112_P5gW9x/ColPost/common/apply/{camCode}.htm'
@@ -42,7 +42,7 @@ def get_department_namelists(schID, depID):
     # print('校系名稱: ', name)
     return li, name
 
-def get_department(schID):
+def get_university_apply_department(schID):
     schID = str(schID).zfill(3)
     url = f'https://www.cac.edu.tw/CacLink/apply112/112Apply_SieveW8n_H86sTvu/html_sieve_112_P5gW9x/ColPost/common/{schID}.htm'
     r = requests.get(url, headers = headers)
@@ -59,7 +59,7 @@ def get_department(schID):
     li = np.unique(li)
     return li
 
-def get_sch():
+def get_university_apply_list():
     url = 'https://www.cac.edu.tw/CacLink/apply112/112Apply_SieveW8n_H86sTvu/html_sieve_112_P5gW9x/ColPost/collegeList.htm'
     r = requests.get(url, headers = headers)
     if r.status_code != 200:
@@ -75,7 +75,7 @@ def get_sch():
             # print(tag.text[1:4], tag.text[5:])
     return li
 
-def get_star_department_namelists(schID, depID):
+def get_university_star_department_namelists(schID, depID):
     camCode = str(schID).zfill(3) + str(depID).zfill(2)
     # print('校系代碼: ', camCode)
     url = f'https://www.cac.edu.tw/CacLink/star112/112pstar_W2_result_RW64tXZ3qa/html_112_K3tg/ColReport/one2seven/common/star/{camCode}.htm'
@@ -110,7 +110,7 @@ def get_star_department_namelists(schID, depID):
     # print('校系名稱: ', name)
     return li, name
 
-def get_star_department(schID):
+def get_university_star_department(schID):
     schID = str(schID).zfill(3)
     url = f'https://www.cac.edu.tw/CacLink/star112/112pstar_W2_result_RW64tXZ3qa/html_112_K3tg/ColReport/one2seven/common/{schID}.htm'
     r = requests.get(url, headers = headers)
@@ -127,7 +127,7 @@ def get_star_department(schID):
     li = np.unique(li)
     return li
 
-def get_star_sch():
+def get_university_star_list():
     url = 'https://www.cac.edu.tw/CacLink/star112/112pstar_W2_result_RW64tXZ3qa/html_112_K3tg/ColReport/one2seven/collegeList.htm'
     r = requests.get(url, headers = headers)
     if r.status_code != 200:
@@ -143,7 +143,7 @@ def get_star_sch():
             # print(tag.text[1:4], tag.text[5:])
     return li
 
-def get_tu_sch():
+def get_technology_university_apply_list():
     url = 'https://ent01.jctv.ntut.edu.tw/applys1result/college.html'
     r = requests.get(url, headers = headers)
     if r.status_code != 200:
@@ -159,8 +159,8 @@ def get_tu_sch():
             li.update({int(data[0]): data[1]})
     return li
 
-def get_tu_dep():
-    sch_li = get_tu_sch()
+def get_technology_university_apply_data():
+    sch_li = get_technology_university_apply_list()
     conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     wc = conn.cursor()
@@ -199,7 +199,7 @@ def get_tu_dep():
                 conn.commit()
     print('科技大學資料取得完成')
 
-def deal_tudata():
+def deal_technology_university_apply_data():
     conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     c.execute('SELECT * FROM tudata')
@@ -238,18 +238,18 @@ def deal_tudata():
     print(f'科技大學資料處理完成, 總共處理了{count}筆資料, 有{wc.execute("SELECT COUNT(*) FROM tupdata").fetchone()[0]}筆應試號碼')
     conn.close()
 
-def get_data():
+def get_university_apply_data():
     conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     c.execute('CREATE TABLE IF NOT EXISTS data (id INTEGER PRIMARY KEY, schName TEXT, depName TEXT, passList TEXT, passCount INTEGER)')
     conn.commit()
-    sch_li = get_sch()
+    sch_li = get_university_apply_list()
     for i in sorted(sch_li.keys()):
         # print('學校代碼: ', i)
-        depID = get_department(i)
+        depID = get_university_apply_department(i)
         for j in depID:
             print(str(i).zfill(3), str(j).zfill(3), sch_li[i], end = ' ')
-            dep_li, name = get_department_namelists(i, j)
+            dep_li, name = get_university_apply_department_namelists(i, j)
             print(name, len(dep_li))
             if dep_li is not None:
                 id = int(str(i).zfill(3) + str(j).zfill(3))
@@ -258,7 +258,7 @@ def get_data():
     conn.close()
     print('普通大學資料取得完成')
 
-def deal_data():
+def deal_university_apply_data():
     conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     c.execute('SELECT * FROM data')
@@ -298,18 +298,18 @@ def deal_data():
     print(f'普通大學資料處理完成, 總共處理了{count}筆資料, 有{wc.execute("SELECT COUNT(*) FROM pdata").fetchone()[0]}筆應試號碼')
     conn.close()
 
-def get_star_data():
+def get_university_star_data():
     conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     c.execute('CREATE TABLE IF NOT EXISTS stardata (id INTEGER PRIMARY KEY, schName TEXT, depName TEXT, passList TEXT, passCount INTEGER)')
     conn.commit()
-    sch_li = get_star_sch()
+    sch_li = get_university_star_list()
     for i in sorted(sch_li.keys()):
         # print('學校代碼: ', i)
-        depID = get_star_department(i)
+        depID = get_university_star_department(i)
         for j in depID:
             print(str(i).zfill(3), str(j).zfill(2), sch_li[i], end = ' ')
-            dep_li, name = get_star_department_namelists(i, j)
+            dep_li, name = get_university_star_department_namelists(i, j)
             print(name, len(dep_li))
             if dep_li is not None:
                 id = int(str(i).zfill(3) + str(j).zfill(2))
@@ -318,7 +318,7 @@ def get_star_data():
     conn.close()
     print('繁星推薦資料取得完成')
 
-def deal_star_data():
+def deal_university_star_data():
     conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     c.execute('SELECT * FROM stardata')
@@ -358,7 +358,7 @@ def deal_star_data():
     print(f'繁星推薦資料處理完成, 總共處理了{count}筆資料, 有{wc.execute("SELECT COUNT(*) FROM pdata").fetchone()[0]}筆應試號碼')
     conn.close()
 
-def search(id):
+def search_university_apply(id):
     conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     data = c.execute('SELECT * FROM pdata WHERE id = ?', (id,)).fetchone()
@@ -381,7 +381,7 @@ def search(id):
         conn.close()
         return pass_li_sch_dep
 
-def tusearch(id):
+def search_technology_university_apply(id):
     conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     data = c.execute('SELECT * FROM tupdata WHERE id = ?', (id,)).fetchone()
@@ -404,7 +404,7 @@ def tusearch(id):
         conn.close()
         return pass_li_sch_dep
 
-def starsearch(id):
+def search_university_star(id):
     conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     data = c.execute('SELECT * FROM starpdata WHERE id = ?', (id,)).fetchone()
@@ -427,7 +427,7 @@ def starsearch(id):
         conn.close()
         return pass_li_sch_dep
 
-def searchname(id):
+def search_name(id):
     conn = sqlite3.connect('data.sqlite')
     c = conn.cursor()
     data = c.execute('SELECT * FROM pnamedata WHERE id = ?', (id,)).fetchone()
@@ -437,33 +437,44 @@ def searchname(id):
     else:
         return data[1]
 
-def searchAll(id):
-    data = search(int(id))
-    tudata = tusearch(int(id))
-    stardata = starsearch(int(id))
-    name = searchname(int(id))
+def search_all(id):
+    data = search_university_apply(int(id))
+    tudata = search_technology_university_apply(int(id))
+    stardata = search_university_star(int(id))
+    name = search_name(int(id))
     return data, tudata, stardata, name
 
 def main():
     while True:
         act = int(input('[1]取得並處理資料 [2]查詢應試號碼: '))
         if act == 1:
-            print('----------------------------------------')
-            os.remove('data.sqlite')
-            print('----------------------------------------')
-            get_star_data()
-            print('----------------------------------------')
-            get_data()
-            print('----------------------------------------')
-            deal_data()
-            print('----------------------------------------')
+            if os.path.isfile('data.sqlite'):
+                print('已有資料庫, 將先刪除舊資料庫')
+                os.remove('data.sqlite')
+                print('已刪除舊資料庫')
+            print('開始取得資料')
+            print('開始取得普通大學資料')
+            get_university_apply_data()
+            print('開始取得繁星推薦資料')
+            get_university_star_data()
+            print('開始取得科技大學資料')
+            get_technology_university_apply_data()
+            print('已取得所有資料')
+            print('開始處理資料')
+            print('開始處理普通大學資料')
+            deal_university_apply_data()
+            print('開始處理繁星推薦資料')
+            deal_university_star_data()
+            print('開始處理科技大學資料')
+            deal_technology_university_apply_data()
+            print('已處理所有資料')
         elif act == 2:
             while True:
                 print('========================================')
                 num = input('輸入應試號碼(輸入q離開): ')
                 if num == 'q':
                     break
-                data, tudata, stardata, name = searchAll(num)
+                data, tudata, stardata, name = search_all(num)
                 if name is not None:
                     print('----------------------------------------')
                     print(f'姓名: {name}')
