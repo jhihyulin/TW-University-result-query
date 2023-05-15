@@ -437,16 +437,7 @@ def searchname(id):
     else:
         return data[1]
 
-if __name__ == '__main__':
-    # schID = int(input('學校代碼: '))
-    # depID = int(input('科系代碼: '))
-    # li = get_department_namelists(schID, depID)
-    # li = get_department(schID)
-    # li = get_sch()
-    # print(li)
-    # get_data()
-    # deal_data()
-
+def main():
     while True:
         act = int(input('[1]取得並處理資料 [2]查詢應試號碼: '))
         if act == 1:
@@ -500,13 +491,5 @@ if __name__ == '__main__':
             print('----------------------------------------')
             print('輸入錯誤')
 
-    # get_star_data()
-    # deal_star_data()
-
-    # conn = sqlite3.connect('data.sqlite')
-    # c = conn.cursor()
-    # c.execute('DROP TABLE IF EXISTS data')
-    # conn.commit()
-    # conn.close()
-    # get_tu_dep()
-    # deal_tudata()
+if __name__ == '__main__':
+    main()
